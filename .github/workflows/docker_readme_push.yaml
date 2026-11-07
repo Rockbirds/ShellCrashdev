@@ -1,9 +1,7 @@
 name: Update Docker Hub Description
 
 on:
-  push:
-    paths:
-      - 'docker/README.md'
+  # Automatic triggers disabled for this repository.
   workflow_dispatch:
 
 jobs:

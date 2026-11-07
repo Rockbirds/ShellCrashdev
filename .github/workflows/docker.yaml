@@ -1,11 +1,7 @@
 name: Build Docker image for ShellCrash
 
 on:
-  push:
-    branches: 
-      - master
-    paths:
-      - 'version'
+  # Automatic triggers disabled for this repository.
   workflow_dispatch:
 
 jobs:

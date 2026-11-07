@@ -1,8 +1,7 @@
 name: bin_update
 
 on:
-  schedule:
-    - cron: "0 18 * * *"   # UTC 18 = 北京时间次日凌晨 2 点
+  # Automatic triggers disabled for this repository.
   workflow_dispatch:
 
 jobs:
