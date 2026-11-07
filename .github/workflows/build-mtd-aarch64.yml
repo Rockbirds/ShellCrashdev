@@ -20,7 +20,7 @@ jobs:
           test "$(git rev-parse HEAD)" = 053ee1038e5dedae61a88cadfb7bdfe9894d8bb6
           ./autogen.sh
           test -f /usr/include/aarch64-linux-gnu/asm/byteorder.h
-          CC=musl-gcc CPPFLAGS='-idirafter /usr/include/aarch64-linux-gnu' LDFLAGS=-static ./configure --build=aarch64-linux-musl --host=aarch64-linux-musl --without-ubifs --without-jffs --without-crypto --without-xattr --without-zstd --without-lzo --without-zlib --without-selinux
+          CC=musl-gcc CPPFLAGS='-idirafter /usr/include/aarch64-linux-gnu -idirafter /usr/include' LDFLAGS=-static ./configure --build=aarch64-linux-musl --host=aarch64-linux-musl --without-ubifs --without-jffs --without-crypto --without-xattr --without-zstd --without-lzo --without-zlib --without-selinux
           make -j2 nanddump mtdinfo ubinfo
           strip nanddump mtdinfo ubinfo
           for name in nanddump mtdinfo ubinfo; do
