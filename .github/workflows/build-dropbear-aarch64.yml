@@ -58,6 +58,25 @@ jobs:
           ! readelf -l sftp-server | grep -q INTERP
           test "$(readelf -h sftp-server | awk '/Machine:/{print $2}')" = AArch64
           sha256sum sftp-server
+          mkdir -m 700 /tmp/shellcrash-ssh
+          ln -s "$PWD/sftp-server" /tmp/shellcrash-ssh/sftp-server
+          ../dropbear-src/dropbearkey -t ed25519 -f /tmp/shellcrash-ssh/hostkey >/dev/null
+          ssh-keygen -q -t ed25519 -N '' -f /tmp/shellcrash-ssh/client
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          cat /tmp/shellcrash-ssh/client.pub >>"$HOME/.ssh/authorized_keys"
+          chmod 600 "$HOME/.ssh/authorized_keys"
+          printf 'shellcrash-sftp-ok\n' >"$HOME/shellcrash-sftp-test.txt"
+          ../dropbear-src/dropbear -F -E -r /tmp/shellcrash-ssh/hostkey -p 127.0.0.1:23222 >/tmp/shellcrash-ssh/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          sleep 2
+          printf 'get shellcrash-sftp-test.txt /tmp/shellcrash-ssh/download.txt\n' >/tmp/shellcrash-ssh/batch
+          sftp -oBatchMode=yes -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null \
+            -i /tmp/shellcrash-ssh/client -P 23222 -b /tmp/shellcrash-ssh/batch "$USER@127.0.0.1"
+          cmp "$HOME/shellcrash-sftp-test.txt" /tmp/shellcrash-ssh/download.txt
+          kill "$server_pid"
+          trap - EXIT
       - name: Publish verified binaries to dev
         env:
           GH_TOKEN: ${{ github.token }}
@@ -67,7 +86,7 @@ jobs:
           import base64, json, pathlib, subprocess
           for name in ('dropbear', 'dropbearkey', 'hash_password', 'sftp-server'):
               path = pathlib.Path('openssh-src' if name == 'sftp-server' else 'dropbear-src') / name
-              payload = {'message': f'Add static AArch64 {name} from pinned Dropbear source',
+              payload = {'message': f'Add static AArch64 {name} from pinned source',
                          'content': base64.b64encode(path.read_bytes()).decode(),
                          'branch': 'dev'}
               existing = subprocess.run(['gh', 'api',
