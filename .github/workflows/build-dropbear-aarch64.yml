@@ -1,0 +1,82 @@
+name: Build static AArch64 Dropbear
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Build from pinned official source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq musl-tools
+          git clone --quiet --depth 1 --branch DROPBEAR_2026.94 https://github.com/mkj/dropbear.git dropbear-src
+          cd dropbear-src
+          test "$(git rev-parse HEAD)" = 28216cd9af822732a1549b78621c2ea9a76a0fe5
+          sed -i 's#"/usr/libexec/sftp-server"#"/tmp/shellcrash-ssh/sftp-server"#' src/default_options.h
+          grep -q 'SFTPSERVER_PATH "/tmp/shellcrash-ssh/sftp-server"' src/default_options.h
+          CC=musl-gcc ./configure --enable-static --disable-zlib
+          cat > crypt-test.c <<'EOF'
+          #include <string.h>
+          extern char *crypt(const char *, const char *);
+          int main(void) { const char *x = crypt("test", "$6$testsalt$"); return !x || strncmp(x, "$6$testsalt$", 12); }
+          EOF
+          musl-gcc -static -o crypt-test crypt-test.c
+          ./crypt-test
+          grep -q '^#define HAVE_SHADOW_H 1' config.h
+          make -j2 PROGRAMS="dropbear dropbearkey"
+          strip dropbear dropbearkey
+          file dropbear dropbearkey
+          ! readelf -l dropbear | grep -q INTERP
+          ! readelf -l dropbearkey | grep -q INTERP
+          test "$(readelf -h dropbear | awk '/Machine:/{print $2}')" = AArch64
+          test "$(readelf -h dropbearkey | awk '/Machine:/{print $2}')" = AArch64
+          gh api 'repos/Rockbirds/ShellCrashdev/contents/assets/ssh/hash_password.c?ref=dev' --jq .content | base64 -d > hash_password.c
+          musl-gcc -static -O2 -Wall -Wextra -Werror -o hash_password hash_password.c
+          strip hash_password
+          ! readelf -l hash_password | grep -q INTERP
+          test "$(readelf -h hash_password | awk '/Machine:/{print $2}')" = AArch64
+          printf 'test-secret\n' | ./hash_password > hash-test.out
+          grep -Eq '^\$6\$[./0-9A-Za-z]{16}\$' hash-test.out
+          sha256sum dropbear dropbearkey hash_password
+          cd ..
+          git clone --quiet --depth 1 --branch V_9_9_P2 https://github.com/openssh/openssh-portable.git openssh-src
+          cd openssh-src
+          test "$(git rev-parse HEAD)" = d76b2675116617394cd355a3437b4963a562b64d
+          autoreconf
+          CC=musl-gcc LDFLAGS=-static ./configure --without-openssl --without-zlib --without-pam
+          make -j2 sftp-server
+          strip sftp-server
+          file sftp-server
+          ! readelf -l sftp-server | grep -q INTERP
+          test "$(readelf -h sftp-server | awk '/Machine:/{print $2}')" = AArch64
+          sha256sum sftp-server
+      - name: Publish verified binaries to dev
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          python3 - <<'PY'
+          import base64, json, pathlib, subprocess
+          for name in ('dropbear', 'dropbearkey', 'hash_password', 'sftp-server'):
+              path = pathlib.Path('openssh-src' if name == 'sftp-server' else 'dropbear-src') / name
+              payload = {'message': f'Add static AArch64 {name} from pinned Dropbear source',
+                         'content': base64.b64encode(path.read_bytes()).decode(),
+                         'branch': 'dev'}
+              existing = subprocess.run(['gh', 'api',
+                  f'repos/Rockbirds/ShellCrashdev/contents/assets/ssh/aarch64/{name}?ref=dev',
+                  '--jq', '.sha'], capture_output=True, text=True)
+              if existing.returncode == 0:
+                  payload['sha'] = existing.stdout.strip()
+              subprocess.run(['gh', 'api', '-X', 'PUT',
+                              f'repos/Rockbirds/ShellCrashdev/contents/assets/ssh/aarch64/{name}',
+                              '--input', '-'], input=json.dumps(payload), text=True, check=True,
+                             stdout=subprocess.DEVNULL)
+          PY
