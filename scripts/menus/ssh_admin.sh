@@ -435,6 +435,69 @@ ssh_admin_run_command() {
     read -r -p "$COMMON_INPUT> " ssh_admin_command_done
 }
 
+ssh_admin_install_mtd_tools() {
+    ssh_admin_root || return 1
+    if [ "$(uname -m)" != aarch64 ]; then
+        msg_alert "\033[31m$TOOLS_ADMIN_MTD_UNSUPPORTED\033[0m"
+        return 1
+    fi
+    ssh_admin_tool_dir=${SSH_ADMIN_TOOL_DIR:-/usr/bin}
+    if [ ! -d "$ssh_admin_tool_dir" ] || [ ! -w "$ssh_admin_tool_dir" ]; then
+        msg_alert "\033[31m$TOOLS_ADMIN_MTD_READONLY\033[0m"
+        return 1
+    fi
+    ssh_admin_new_tools=''
+    ssh_admin_tool_error=''
+    for ssh_admin_tool in nanddump mtdinfo ubinfo; do
+        ssh_admin_tool_target="$ssh_admin_tool_dir/$ssh_admin_tool"
+        if command -v "$ssh_admin_tool" >/dev/null 2>&1; then
+            continue
+        fi
+        if [ -x "$ssh_admin_tool_target" ] &&
+           "$ssh_admin_tool_target" --version >/dev/null 2>&1; then
+            continue
+        fi
+        if [ -e "$ssh_admin_tool_target" ] || [ -L "$ssh_admin_tool_target" ]; then
+            ssh_admin_tool_error=$ssh_admin_tool
+            break
+        fi
+        ssh_admin_tool_source="$CRASHDIR/assets/flash/aarch64/$ssh_admin_tool"
+        if [ ! -x "$ssh_admin_tool_source" ]; then
+            ssh_admin_tool_error=$ssh_admin_tool
+            break
+        fi
+        ssh_admin_tool_temp=$(mktemp "$ssh_admin_tool_dir/.shellcrash-$ssh_admin_tool.XXXXXX") || {
+            ssh_admin_tool_error=$ssh_admin_tool
+            break
+        }
+        if ! cp "$ssh_admin_tool_source" "$ssh_admin_tool_temp" ||
+           ! chown 0:0 "$ssh_admin_tool_temp" ||
+           ! chmod 755 "$ssh_admin_tool_temp" ||
+           ! "$ssh_admin_tool_temp" --version >/dev/null 2>&1 ||
+           ! ln "$ssh_admin_tool_temp" "$ssh_admin_tool_target"; then
+            ssh_admin_tool_error=$ssh_admin_tool
+            rm -f "$ssh_admin_tool_temp"
+            break
+        fi
+        rm -f "$ssh_admin_tool_temp"
+        ssh_admin_new_tools="$ssh_admin_new_tools $ssh_admin_tool"
+    done
+    if [ -n "$ssh_admin_tool_error" ]; then
+        for ssh_admin_tool in $ssh_admin_new_tools; do
+            rm -f "$ssh_admin_tool_dir/$ssh_admin_tool"
+        done
+        msg_alert "\033[31m$TOOLS_ADMIN_MTD_FAILED $ssh_admin_tool_error\033[0m"
+        return 1
+    fi
+    sync
+    msg_alert "\033[32m$TOOLS_ADMIN_MTD_READY\033[0m"
+    for ssh_admin_tool in nanddump mtdinfo ubinfo; do
+        ssh_admin_tool_path=$(command -v "$ssh_admin_tool" 2>/dev/null) || :
+        [ -n "$ssh_admin_tool_path" ] || ssh_admin_tool_path="$ssh_admin_tool_dir/$ssh_admin_tool"
+        content_line "$ssh_admin_tool: $ssh_admin_tool_path"
+    done
+}
+
 ssh_admin_menu() {
     ssh_admin_port=${ssh_admin_port:-22}
     while true; do
@@ -448,6 +511,7 @@ ssh_admin_menu() {
             "3) $TOOLS_ADMIN_ENABLE" \
             "4) $TOOLS_ADMIN_DIAG_ITEM" \
             "5) $TOOLS_ADMIN_COMMAND_ITEM" \
+            "6) $TOOLS_ADMIN_MTD_ITEM" \
             "" \
             "0) $COMMON_BACK"
         read -r -p "$COMMON_INPUT> " ssh_admin_choice
@@ -477,6 +541,7 @@ ssh_admin_menu() {
         3) ssh_admin_enable ;;
         4) ssh_admin_diagnostics ;;
         5) ssh_admin_run_command ;;
+        6) ssh_admin_install_mtd_tools ;;
         *) errornum ;;
         esac
     done

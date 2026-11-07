@@ -188,4 +188,28 @@ printf 'tmpfs / tmpfs rw,relatime 0 0\n' >"$SSH_ADMIN_MOUNTS_FILE"
 printf 'ubi0:system / ubifs rw,relatime 0 0\ntmpfs /etc tmpfs rw,relatime 0 0\n' >"$SSH_ADMIN_MOUNTS_FILE"
 [ "$(ssh_admin_persistence_state)" = "$TOOLS_ADMIN_PERSISTENCE_NONE" ]
 
+CRASHDIR="$test_dir/flash-package"
+SSH_ADMIN_TOOL_DIR="$test_dir/system-bin"
+mkdir -p "$CRASHDIR/assets/flash/aarch64" "$SSH_ADMIN_TOOL_DIR"
+for tool in nanddump mtdinfo ubinfo; do
+    printf '#!/bin/sh\n[ "$1" = "--version" ]\n' >"$CRASHDIR/assets/flash/aarch64/$tool"
+    chmod 755 "$CRASHDIR/assets/flash/aarch64/$tool"
+done
+uname() { printf 'aarch64\n'; }
+TOOLS_ADMIN_MTD_READY='tools ready'
+ssh_admin_install_mtd_tools >/dev/null
+ssh_admin_install_mtd_tools >/dev/null
+for tool in nanddump mtdinfo ubinfo; do
+    [ -x "$SSH_ADMIN_TOOL_DIR/$tool" ]
+done
+SSH_ADMIN_TOOL_DIR="$test_dir/rollback-bin"
+mkdir "$SSH_ADMIN_TOOL_DIR"
+mv "$CRASHDIR/assets/flash/aarch64/mtdinfo" "$test_dir/mtdinfo.saved"
+if ssh_admin_install_mtd_tools >/dev/null; then
+    echo 'Accepted a missing MTD tool binary' >&2
+    exit 1
+fi
+[ ! -e "$SSH_ADMIN_TOOL_DIR/nanddump" ]
+unset -f uname
+
 echo 'SSH admin tests: OK'

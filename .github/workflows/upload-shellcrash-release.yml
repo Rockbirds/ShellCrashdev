@@ -15,8 +15,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -eu
-          gh api 'repos/Rockbirds/ShellCrashdev/contents/ShellCrash.tar.gz?ref=v1.9.6alpha1-r10' --jq .content | base64 -d > ShellCrash.tar.gz
+          gh api 'repos/Rockbirds/ShellCrashdev/contents/ShellCrash.tar.gz?ref=v1.9.6alpha1-r11' --jq .content | base64 -d > ShellCrash.tar.gz
           test -s ShellCrash.tar.gz
           tar -tzf ShellCrash.tar.gz | grep -q '^./assets/ssh/aarch64/dropbear$'
           tar -tzf ShellCrash.tar.gz | grep -q '^./assets/ssh/aarch64/sftp-server$'
-          gh release upload v1.9.6alpha1-r10 ShellCrash.tar.gz --repo Rockbirds/ShellCrashdev --clobber
+          for name in nanddump mtdinfo ubinfo; do tar -tzf ShellCrash.tar.gz | grep -q "^./assets/flash/aarch64/$name$"; done
+          gh release upload v1.9.6alpha1-r11 ShellCrash.tar.gz --repo Rockbirds/ShellCrashdev --clobber
