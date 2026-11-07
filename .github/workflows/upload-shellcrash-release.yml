@@ -1,0 +1,22 @@
+name: Upload ShellCrash release package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Attach the versioned install package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          gh api 'repos/Rockbirds/ShellCrashdev/contents/ShellCrash.tar.gz?ref=v1.9.6alpha1-r9' --jq .content | base64 -d > ShellCrash.tar.gz
+          test -s ShellCrash.tar.gz
+          tar -tzf ShellCrash.tar.gz | grep -q '^./assets/ssh/aarch64/dropbear$'
+          tar -tzf ShellCrash.tar.gz | grep -q '^./assets/ssh/aarch64/sftp-server$'
+          gh release upload v1.9.6alpha1-r9 ShellCrash.tar.gz --repo Rockbirds/ShellCrashdev --clobber

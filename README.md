@@ -4,8 +4,8 @@
   <a target="_blank" href="https://github.com/MetaCubeX/mihomo/releases">
     <img src="https://img.shields.io/github/release/MetaCubeX/mihomo.svg?style=flat-square&label=Core">
   </a>
-  <a target="_blank" href="https://github.com/juewuy/ShellCrash/releases">
-    <img src="https://img.shields.io/github/release/juewuy/ShellCrash.svg?style=flat-square&label=ShellCrash&colorB=green">
+  <a target="_blank" href="https://github.com/Rockbirds/ShellCrashdev/releases">
+    <img src="https://img.shields.io/github/release/Rockbirds/ShellCrashdev.svg?style=flat-square&label=ShellCrash&colorB=green">
   </a>
 </p>
 
@@ -38,7 +38,7 @@ ShellCrash is designed to be compatible with the vast majority of network device
 * **Other Devices**: Compatible with other devices based on Linux/GNU or Linux/busybox.
 * **Docker**：Compatible with Docker environments (e.g., Synology, PVE, etc.).
 
-> For additional device support, please submit an [Issue](https://github.com/juewuy/ShellCrash/issues) or provide feedback in the [Telegram Group](https://t.me/ShellClash) (please include the device model and the output of the `uname -a` command).
+> For additional device support, please submit an [Issue](https://github.com/Rockbirds/ShellCrashdev/issues) or provide feedback in the [Telegram Group](https://t.me/ShellClash) (please include the device model and the output of the `uname -a` command).
 
 ---
 
@@ -48,78 +48,19 @@ ShellCrash is designed to be compatible with the vast majority of network device
 > If you encounter connection failures or SSL-related issues, please try switching to an alternative installation mirror.
 
 ### Prerequisites
-1. Ensure the device has **SSH** enabled and **Root privileges** obtained (Linux systems with a GUI can use the terminal directly).
-2. Connect to the device using an SSH tool (such as PuTTY, JuiceSSH, or the system's built-in terminal).
+1. Obtain a **root terminal** on the device (a management UI terminal is sufficient).
+2. After enabling SSH, connect remotely with PuTTY, JuiceSSH, or a system terminal.
 
-### :penguin: Standard Linux Device Installation
+### :penguin: Linux and Router Installation
 
-> [!IMPORTANT]
-> Please perform the installation as the root user.
-
-> Install via wget (jsDelivr CDN source)
-```sh
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@dev' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install_en.sh \
-  && bash /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
-> Or install via curl (Author's private source)
+Run these commands in a root terminal on the device. This fork publishes installation and updates from `dev` only.
 
 ```sh
-export url='https://gh.jwsc.eu.org/dev' && bash -c "$(curl -kfsSl $url/install_en.sh)" && . /etc/profile &> /dev/null
+curl -fL https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/dev/install_en.sh -o /tmp/install.sh
+if command -v bash >/dev/null 2>&1; then bash /tmp/install.sh; else sh /tmp/install.sh; fi
 ```
 
-### :satellite: Router Device Installation
-
-**Installation via `curl`:**
-> GitHub Source (Recommended for overseas environments or environments with proxy access)
-```sh
-export url='https://raw.githubusercontent.com/juewuy/ShellCrash/dev' \
-  && sh -c "$(curl -kfsSl $url/install_en.sh)" \
-  && . /etc/profile &> /dev/null
-```
-
-> Or jsDelivr CDN source
-
-```sh
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@dev' \
-  && sh -c "$(curl -kfsSl $url/install_en.sh)" \
-  && . /etc/profile &> /dev/null
-```
-
-> Or Author's private source
-```sh
-export url='https://gh.jwsc.eu.org/dev' && sh -c "$(curl -kfsSl $url/install_en.sh)" && . /etc/profile &> /dev/null
-```
-
-**Installation via `wget`:**
-> GitHub Source (Recommended for overseas environments or environments with proxy access)
-```sh
-export url='https://raw.githubusercontent.com/juewuy/ShellCrash/dev' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install_en.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
-> Or jsDelivr CDN source
-```sh
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@dev' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install_en.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
-### :pager: Installation for Legacy Devices with Older `wget` Versions
-
-> Author's private HTTP beta source
-```sh
-export url='http://t.jwsc.eu.org' \
-  && wget -q -O /tmp/install.sh $url/install_en.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
+After installation, run `crash` and open **Tools & Optimization → 9) Device SSH and root management**. Option 2 changes the root password. It uses the system `passwd` on writable UBIFS systems. On read-only account files, the bundled static AArch64 hash helper stores a protected SHA-512 shadow copy and bind-mounts it at `/etc/shadow`. Option 3 starts bundled static AArch64 Dropbear and OpenSSH `sftp-server` for SSH/SFTP with root password login on the same port. The host key and port are stored persistently in `/data/shellcrash-ssh` when `/data` is mounted, or `/mnt/userdata/shellcrash-ssh` when that is the user-data volume. On UDX710 firmware known to start the Web terminal from `/home/root/loader.sh`, ShellCrash backs up that script and appends an independent SSH restore entry. Other writable SysV systems use `/etc/rcS.d/S99shellcrash-ssh`. At boot, the entry restores the shadow mount before starting SSH/SFTP. The menu reports boot restore status. Option 4 shows diagnostics; option 5 runs a custom command. The current plaintext password cannot be recovered. After updating, reboot the target device and test SSH and SFTP there; WAN access may require a firewall or upstream router rule. The [build workflow](.github/workflows/build-dropbear-aarch64.yml) documents binary provenance and an automated SFTP download test.
 
 ### :cloud: Virtual Machines
 - **Alpine Linux VM**: It is highly recommended to use an Alpine image for optimal compatibility.
@@ -127,7 +68,7 @@ export url='http://t.jwsc.eu.org' \
 # Install necessary dependencies
 apk add --no-cache wget openrc ca-certificates tzdata nftables iproute2 dcron
 # Execute installation command
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@dev' \
+export url='https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/dev' \
   && wget -q --no-check-certificate -O /tmp/install.sh $url/install_en.sh \
   && sh /tmp/install.sh \
   && . /etc/profile &> /dev/null
@@ -170,7 +111,7 @@ crash -h     # View the list of command help
 
 ## :link: Related Links
 - FAQ: [Juewuy's Blog](https://juewuy.github.io/chang-jian-wen-ti/)
-- Changelog: [Release History](https://github.com/juewuy/ShellCrash/releases)
+- Changelog: [Release History](https://github.com/Rockbirds/ShellCrashdev/releases)
 - Discussion: [Telegram Group](https://t.me/ShellClash)
 
 ## :scroll: License

@@ -985,7 +985,7 @@ setdb() {
             ;;
         2)
             db_type=meta_xd
-            setconfig external_ui_url "https://raw.githubusercontent.com/juewuy/ShellCrash/update/bin/dashboard/meta_xd.tar.gz"
+            setconfig external_ui_url "https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/dev/bin/dashboard/meta_xd.tar.gz"
             dbdir
             ;;
         3)
@@ -1122,152 +1122,16 @@ saveserver() {
 
 # 安装源
 setserver() {
-    while true; do
-        line_break
-        LISTFILE="$CRASHDIR"/configs/servers_"$i18n".list
-        [ -z "$release_type" ] && release_name=$UPG_SOURCE_UNSET
-        [ -n "$release_type" ] && release_name="$release_type$UPG_SOURCE_ROLLBACK_TAG"
-        [ "$release_type" = stable ] && release_name=$UPG_SOURCE_STABLE_TEXT
-        [ "$release_type" = master ] && release_name=$UPG_SOURCE_MASTER_TEXT
-        [ "$release_type" = dev ] && release_name=$UPG_SOURCE_DEV_TEXT
-        [ -n "$url_id" ] && url_name=$(grep "$url_id" "$LISTFILE" 2>/dev/null | awk '{print $2}') || url_name="$update_url"
-
-        comp_box "\033[30;47m$UPG_SOURCE_TITLE\033[0m" \
-            "" \
-            "$UPG_SOURCE_CUR_VER\033[4;33m$release_name\033[0m" \
-            "$UPG_SOURCE_CUR_URL\n\033[4;32m$url_name\033[0m"
-
-        grep -E "^1|^2" "$LISTFILE" |
-            awk '{print NR") "$2}' |
-            while IFS= read -r line; do
-                content_line "$line"
-            done
-
-        btm_box "" \
-            "$UPG_SOURCE_SWITCH_STABLE" \
-            "$UPG_SOURCE_SWITCH_MASTER" \
-            "$UPG_SOURCE_SWITCH_DEV" \
-            "" \
-            "$UPG_SOURCE_CUSTOM" \
-            "$UPG_SOURCE_ROLLBACK" \
-            "" \
-            "0) $COMMON_BACK"
-        read -r -p "$COMMON_INPUT> " num
-        case "$num" in
-        "" | 0)
-            checkupdate=false
-            break
-            ;;
-        [1-99])
-            url_id_new=$(grep -E "^1|$release_name" "$LISTFILE" | sed -n "$num"p | awk '{print $1}')
-            if [ -z "$url_id_new" ]; then
-                errornum
-                continue
-            elif [ "$url_id_new" -ge 200 ]; then
-                update_url=$(grep -E "^1|$release_name" "$LISTFILE" | sed -n "$num"p | awk '{print $3}')
-                url_id=''
-                saveserver
-                break
-            else
-                url_id=$url_id_new
-                update_url=''
-                saveserver
-                break
-            fi
-            unset url_id_new
-            ;;
-        a)
-            release_type=stable
-            [ -z "$url_id" ] && url_id=101
-            saveserver
-            ;;
-        b)
-            release_type=master
-            [ -z "$url_id" ] && url_id=101
-            saveserver
-            ;;
-        c)
-            while true; do
-                comp_box "\033[33m$UPG_SOURCE_DEV_WARN1\033[0m" \
-                    "\033[33m$UPG_SOURCE_DEV_WARN2\033[0m" \
-                    "$UPG_SOURCE_DEV_WARN3"
-                content_line "$UPG_SOURCE_DEV_CONFIRM"
-                separator_line "-"
-                btm_box "$UPG_SOURCE_DEV_YES" \
-                    "0) $COMMON_BACK"
-                read -r -p "$COMMON_INPUT> " res
-                case "$res" in
-                "" | 0)
-                    break
-                    ;;
-                1)
-                    release_type=dev
-                    [ -z "$url_id" ] && url_id=101
-                    saveserver
-                    break
-                    ;;
-                *)
-                    errornum
-                    ;;
-                esac
-            done
-            ;;
-        d)
-            comp_box "\033[36m$UPG_SOURCE_CUSTOM_HINT\033[0m" \
-                "$UPG_CUSTOM_CORE_LINK_HINT3"
-            read -r -p "$UPG_SOURCE_CUSTOM_INPUT" update_url
-            if [ "$update_url" = 0 ]; then
-                continue
-            elif [ ! -z "$update_url" ]; then
-                url_id=''
-                release_type=''
-                saveserver
-            fi
-            ;;
-        e)
-            if [ -n "$url_id" ] && [ "$url_id" -lt 200 ]; then
-                line_break
-                separator_line "="
-                content_line "\033[32m$UPG_SOURCE_VER_GETTING\033[0m"
-                . "$CRASHDIR"/libs/web_get_lite.sh
-                list=$(web_get_lite https://api.github.com/repos/juewuy/ShellCrash/tags | grep -E '"name": "[0-9]' | cut -d '"' -f4)
-                if [ "$?" = "0" ]; then
-                    content_line "\033[32m$UPG_SOURCE_VER_OK\033[0m"
-                    separator_line "="
-
-                    line_break
-                    separator_line "="
-                    content_line "\033[31m$UPG_SOURCE_ROLLBACK_SELECT\033[0m"
-                    list_box "$list"
-                    btm_box "" \
-                        "0) $COMMON_BACK"
-                    read -r -p "$COMMON_INPUT> " num
-                    if [ -z "$num" ] || [ "$num" = 0 ]; then
-                        continue
-                    elif [ "$num" -le $(echo "$list" | awk 'END{print NR}') ]; then
-                        release_type=$(echo "$list" | sed -n "$num"p)
-                        update_url=''
-                        saveserver
-                    else
-                        errornum
-                        continue
-                    fi
-                else
-                    content_line "\033[31m$UPG_SOURCE_ROLLBACK_FAIL\033[0m"
-                    separator_line "="
-                    sleep 1
-                    continue
-                fi
-                rm -rf "$TMPDIR"/tags
-            else
-                msg_alert "\033[31m$UPG_SOURCE_ROLLBACK_NOTSUP\033[0m" \
-                    "\033[31m$UPG_SOURCE_ROLLBACK_HINT\033[0m"
-                continue
-            fi
-            ;;
-        *)
-            errornum
-            ;;
-        esac
-    done
+    # This fork publishes one update source and one branch.
+    update_url='https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/dev'
+    url_id=''
+    release_type=dev
+    setconfig update_url "'$update_url'"
+    setconfig url_id "''"
+    setconfig release_type dev
+    comp_box "\033[30;47m$UPG_SOURCE_TITLE\033[0m" \
+        "\033[36mhttps://github.com/Rockbirds/ShellCrashdev\033[0m" \
+        "\033[32m$update_url\033[0m"
+    btm_box "0) $COMMON_BACK"
+    read -r -p "$COMMON_INPUT> " res
 }

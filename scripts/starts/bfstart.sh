@@ -3,6 +3,10 @@
 
 #初始化目录
 [ -z "$CRASHDIR" ] && CRASHDIR=$( cd $(dirname $0);cd ..;pwd)
+[ -f "$CRASHDIR/libs/ssh_admin_runtime.sh" ] && {
+    . "$CRASHDIR"/libs/ssh_admin_runtime.sh
+    ssh_admin_runtime_restore >/dev/null 2>&1
+}
 . "$CRASHDIR"/libs/get_config.sh
 [ -z "$BINDIR" -o -z "$TMPDIR" -o -z "$COMMAND" ] && . "$CRASHDIR"/init.sh >/dev/null 2>&1
 [ ! -d "$TMPDIR" ] && mkdir -p "$TMPDIR"

@@ -8,7 +8,8 @@ echo "**                             by  Juewuy    **"
 echo "***********************************************"
 
 language=en
-[ -z "$url" ] && url="https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master"
+url="https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/dev"
+release_type=dev
 
 # Internal Tools
 cecho() {
@@ -47,7 +48,7 @@ webget() {
     fi
 }
 error_down() {
-    cecho "Please refer to \033[32mhttps://github.com/juewuy/ShellCrash/blob/master/README.md"
+    cecho "Please refer to \033[32mhttps://github.com/Rockbirds/ShellCrashdev/blob/dev/README.md"
     cecho "\033[33mUse an alternative source to reinstall!\033[0m"
 }
 
@@ -278,20 +279,8 @@ install() {
     echo "-----------------------------------------------"
 }
 setversion() {
-    echo "-----------------------------------------------"
-    cecho "\033[33mSelect version to install:\033[0m"
-    cecho " 1 \033[32mBeta (Recommended)\033[0m"
-    cecho " 2 \033[36mStable\033[0m"
-    cecho " 3 \033[31mDev (Unstable)\033[0m"
-    echo "-----------------------------------------------"
-    read -p "Enter number > " num
-    case "$num" in
-	1) release_type=master ;;
-    2) release_type=stable ;;
-    3) release_type=dev ;;
-    *) ;;
-    esac
-	url=$(echo "$url" | sed "s/master/$release_type/")
+    release_type=dev
+    url="https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/dev"
 }
 
 # Pre-Install Checks

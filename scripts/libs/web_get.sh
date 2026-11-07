@@ -4,11 +4,12 @@ webget(){
     if pidof CrashCore >/dev/null; then
         setproxy #设置临时代理，【$1】代表下载目录，【$2】代表在线地址
         url=$(printf '%s\n' "$2" |
-        sed -e 's#https://.*jsdelivr.net/gh/juewuy/ShellCrash[@|/]#https://raw.githubusercontent.com/juewuy/ShellCrash/#' \
-            -e 's#https://gh.jwsc.eu.org/#https://raw.githubusercontent.com/juewuy/ShellCrash/#')
+        sed -e 's#https://.*jsdelivr.net/gh/Rockbirds/ShellCrashdev@#https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/#')
+        fallback_url="$2"
     else
-        url=$(printf '%s\n' "$2" |
-        sed 's#https://raw.githubusercontent.com/juewuy/ShellCrash/#https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@#')
+        url="$2"
+        fallback_url=$(printf '%s\n' "$2" |
+        sed 's#https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/#https://testingcf.jsdelivr.net/gh/Rockbirds/ShellCrashdev@#')
     fi
     # ===============================================
 
@@ -25,7 +26,7 @@ webget(){
             certificate='--no-check-certificate'
         fi
         wget -Y on $agent $progress $redirect $certificate --timeout=3 -O "$1" "$url" && return 0 #成功则退出否则重试
-        wget -Y off $agent $progress $redirect $certificate --timeout=5 -O "$1" "$2"
+        wget -Y off $agent $progress $redirect $certificate --timeout=5 -O "$1" "$fallback_url"
         return $?
     elif curl --version >/dev/null 2>&1; then
         if [ "$3" = "echooff" ];then
@@ -59,16 +60,16 @@ webget(){
         export http_proxy=""
         
         if [ -n "$fsize_raw" ] && [ "$fsize_raw" -gt 204800 ]; then
-            result=$(execute_curl "$1" "$2" "$fsize_raw" "$agent $redirect $certificate")
+            result=$(execute_curl "$1" "$fallback_url" "$fsize_raw" "$agent $redirect $certificate")
         else
-            result=$(curl $agent -w '%{http_code}' --connect-timeout 5 $progress $redirect $certificate -o "$1" "$2")
+            result=$(curl $agent -w '%{http_code}' --connect-timeout 5 $progress $redirect $certificate -o "$1" "$fallback_url")
         fi
         [ "$result" = "200" ]
         return $?
     elif ckcmd wget;then
         [ "$3" = "echooff" ] && progress='-q'
         wget -Y on $progress -O "$1" "$url" && return 0 #成功则退出否则重试
-        wget -Y off $progress -O "$1" "$2"
+        wget -Y off $progress -O "$1" "$fallback_url"
         return $?
     else
         echo "No Curl or Wget！！！"

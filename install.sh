@@ -8,7 +8,8 @@ echo "**                             by  Juewuy    **"
 echo "***********************************************"
 
 language=chs
-[ -z "$url" ] && url="https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master"
+url="https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/dev"
+release_type=dev
 
 # 内置工具
 cecho() {
@@ -47,7 +48,7 @@ webget() {
     fi
 }
 error_down() {
-    cecho "请参考 \033[32mhttps://github.com/juewuy/ShellCrash/blob/master/README_CN.md"
+    cecho "请参考 \033[32mhttps://github.com/Rockbirds/ShellCrashdev/blob/dev/README_CN.md"
     cecho "\033[33m使用其他安装源重新安装！\033[0m"
 }
 
@@ -278,20 +279,8 @@ install() {
     echo "-----------------------------------------------"
 }
 setversion() {
-    echo "-----------------------------------------------"
-    cecho "\033[33m请选择想要安装的版本：\033[0m"
-    cecho " 1 \033[32m公测版(推荐)\033[0m"
-    cecho " 2 \033[36m稳定版\033[0m"
-    cecho " 3 \033[31m开发版\033[0m"
-    echo "-----------------------------------------------"
-    read -p "请输入相应数字 > " num
-    case "$num" in
-	1) release_type=master ;;
-    2) release_type=stable ;;
-    3) release_type=dev ;;
-    *) ;;
-    esac
-	url=$(echo "$url" | sed "s/master/$release_type/")
+    release_type=dev
+    url="https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/dev"
 }
 
 # 安装检查

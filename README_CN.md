@@ -4,8 +4,8 @@
   <a target="_blank" href="https://github.com/MetaCubeX/mihomo/releases">
     <img src="https://img.shields.io/github/release/MetaCubeX/mihomo.svg?style=flat-square&label=Core">
   </a>
-  <a target="_blank" href="https://github.com/juewuy/ShellCrash/releases">
-    <img src="https://img.shields.io/github/release/juewuy/ShellCrash.svg?style=flat-square&label=ShellCrash&colorB=green">
+  <a target="_blank" href="https://github.com/Rockbirds/ShellCrashdev/releases">
+    <img src="https://img.shields.io/github/release/Rockbirds/ShellCrashdev.svg?style=flat-square&label=ShellCrash&colorB=green">
   </a>
 </p>
 
@@ -38,7 +38,7 @@ ShellCrash 旨在兼容绝大多数基于 Linux 内核的网络设备：
 * **其他设备**：兼容各种基于Linux/GNU或者Linux/busybox开发的设备。
 * **Docker**：部分可能不兼容的设备（如群辉、PVE），支持docker环境运行。
 
-> 更多设备支持，请提交 [Issue](https://github.com/juewuy/ShellCrash/issues) 或前往 [Telegram 群组](https://t.me/ShellClash) 反馈（请附上设备型号及 `uname -a` 命令的输出信息）。
+> 更多设备支持，请提交 [Issue](https://github.com/Rockbirds/ShellCrashdev/issues) 或前往 [Telegram 群组](https://t.me/ShellClash) 反馈（请附上设备型号及 `uname -a` 命令的输出信息）。
 
 ---
 
@@ -48,82 +48,19 @@ ShellCrash 旨在兼容绝大多数基于 Linux 内核的网络设备：
 > 若遇到连接失败或SSL相关问题，请尝试切换至其他安装镜像站。
 
 ### 前置条件
-1. 确保设备已开启 **SSH** 并获得 **Root 权限**（带图形介面的 Linux 系统可直接使用终端）。
-2. 使用 SSH 工具（如 Putty、JuiceSSH、或系统自带终端）连接至设备。
+1. 在设备上取得 **Root 终端**（可使用管理界面的 Web 终端）。
+2. 安装并开启 SSH 后，可使用 PuTTY、JuiceSSH 或系统终端远程连接。
 
-### :penguin: 标准 Linux 设备安装
+### :penguin: Linux 与路由器安装
 
-> [!IMPORTANT]
-> 请以 root 用户进行安装。
-
-> 使用 wget 安装（jsDelivr CDN 源）
-```sh
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install.sh \
-  && bash /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
-> 或使用 curl 安装（作者私人源）
+请使用设备上的 root 终端。此仓库仅从 `dev` 分支提供安装与更新文件。
 
 ```sh
-export url='https://gh.jwsc.eu.org/master' \
-  && bash -c "$(curl -kfsSl $url/install.sh)" \
-  && . /etc/profile &> /dev/null
+curl -fL https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/dev/install.sh -o /tmp/install.sh
+if command -v bash >/dev/null 2>&1; then bash /tmp/install.sh; else sh /tmp/install.sh; fi
 ```
 
-### :satellite: 路由器设备安装
-
-**使用 `curl` 安装：**
-> GitHub 源（推荐海外环境或具备代理环境使用）
-```sh
-export url='https://raw.githubusercontent.com/juewuy/ShellCrash/master' \
-  && sh -c "$(curl -kfsSl $url/install.sh)" \
-  && . /etc/profile &> /dev/null
-```
-
-> 或 jsDelivr CDN 源
-
-```sh
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master' \
-  && sh -c "$(curl -kfsSl $url/install.sh)" \
-  && . /etc/profile &> /dev/null
-```
-
-> 或作者私人源
-```sh
-export url='https://gh.jwsc.eu.org/master' \
-  && sh -c "$(curl -kfsSl $url/install.sh)" \
-  && . /etc/profile &> /dev/null
-```
-
-**使用 `wget` 安装：**
-> GitHub 源（推荐海外环境或具备代理环境使用）
-```sh
-export url='https://raw.githubusercontent.com/juewuy/ShellCrash/master' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
-> 或 jsDelivr CDN 源
-```sh
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master' \
-  && wget -q --no-check-certificate -O /tmp/install.sh $url/install.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
-### :pager: 老旧设备使用低版本 `wget` 安装
-
-> 作者私人 http 内测源
-```sh
-export url='http://t.jwsc.eu.org' \
-  && wget -q -O /tmp/install.sh $url/install.sh \
-  && sh /tmp/install.sh \
-  && . /etc/profile &> /dev/null
-```
-
+安装后运行 `crash`，进入「工具与优化 → 9) 设备SSH与root管理」。选项 2 修改 root 密码：在可写 UBIFS 系统上使用系统的 `passwd`，在账户目录只读的 UDX710 系统上使用随包提供的静态 AArch64 哈希工具，保存受限的 SHA-512 shadow 副本并 bind mount 到 `/etc/shadow`。选项 3 使用随包提供的静态 AArch64 Dropbear 和 OpenSSH `sftp-server` 开启 SSH/SFTP，root 密码登录使用同一端口。主机密钥和端口写入持久化存储：已有 `/data` 的设备用 `/data/shellcrash-ssh`，以 `/mnt/userdata` 为用户数据卷的设备用 `/mnt/userdata/shellcrash-ssh`。已确认通过 `/home/root/loader.sh` 启动 Web 终端的 UDX710 固件，会备份该脚本并追加独立 SSH 恢复入口；其他可写 SysV 固件使用 `/etc/rcS.d/S99shellcrash-ssh`。开机时先恢复密码挂载，再启动 SSH/SFTP。菜单显示开机恢复状态。选项 4 显示诊断，选项 5 执行一条自定义命令。当前密码明文无法读取。更新后需在目标设备上实际重启并测试 SSH 与 SFTP；外网访问还须检查防火墙与上级路由器。静态程序来源、构建方式和 SFTP 下载测试见[构建工作流](.github/workflows/build-dropbear-aarch64.yml)。
 
 ### :cloud: 虚拟机
 - **Alpine Linux 虚拟机**：强烈建议使用 Alpine 镜像以获得最佳兼容性
@@ -132,7 +69,7 @@ export url='http://t.jwsc.eu.org' \
 apk add --no-cache wget openrc ca-certificates tzdata nftables iproute2 dcron
 
 # 执行安装命令
-export url='https://testingcf.jsdelivr.net/gh/juewuy/ShellCrash@master' \
+export url='https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/dev' \
   && wget -q --no-check-certificate -O /tmp/install.sh $url/install.sh \
   && sh /tmp/install.sh \
   && . /etc/profile &> /dev/null
@@ -175,7 +112,7 @@ crash -h     # 查看命令帮助列表
 
 ## :link: 相关链接
 - 常见问题：[Juewuy's Blog](https://juewuy.github.io/chang-jian-wen-ti/)
-- 更新日志：[Release History](https://github.com/juewuy/ShellCrash/releases)
+- 更新日志：[Release History](https://github.com/Rockbirds/ShellCrashdev/releases)
 - 交流反馈：[Telegram 讨论组](https://t.me/ShellClash)
 
 ---

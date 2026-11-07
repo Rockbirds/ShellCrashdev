@@ -6,11 +6,15 @@ __IS_MODULE_8_TOOLS_LOADED=1
 
 . "$CRASHDIR"/libs/logger.sh
 . "$CRASHDIR"/libs/web_get_bin.sh
+. "$CRASHDIR"/menus/ssh_admin.sh
 load_lang 8_tools
 
 stop_iptables() {
-    iptables -w -t nat -D PREROUTING -p tcp -m multiport --dports "$ssh_port" -j REDIRECT --to-ports 22 >/dev/null 2>&1
-    ip6tables -w -t nat -A PREROUTING -p tcp -m multiport --dports "$ssh_port" -j REDIRECT --to-ports 22 >/dev/null 2>&1
+    old_port=${1:-$ssh_port}
+    while iptables -w -t nat -D PREROUTING -p tcp -m multiport --dports "$old_port" -j REDIRECT --to-ports 22 >/dev/null 2>&1; do :; done
+    if command -v ip6tables >/dev/null 2>&1; then
+        while ip6tables -w -t nat -D PREROUTING -p tcp -m multiport --dports "$old_port" -j REDIRECT --to-ports 22 >/dev/null 2>&1; do :; done
+    fi
 }
 
 ssh_tools() {
@@ -34,15 +38,16 @@ ssh_tools() {
             read -r -p "$TOOLS_PROMPT_PORT" num
             if [ -z "$num" ]; then
                 errornum
-            elif [ "$num" -gt 65535 ] || [ "$num" -le 999 ]; then
+            elif ! ssh_admin_valid_port "$num" || [ "$num" -le 999 ]; then
                 msg_alert "\033[31m$TOOLS_ERR_PORT\033[0m"
             elif [ -n "$(netstat -ntul | grep :$num)" ]; then
                 msg_alert "\033[31m$TOOLS_ERR_PORT_OCCUPIED\033[0m"
             else
+                old_ssh_port=$ssh_port
                 ssh_port=$num
                 setconfig ssh_port "$ssh_port"
                 sed -i "/启用外网访问SSH服务/d" /etc/firewall.user
-                stop_iptables
+                stop_iptables "$old_ssh_port"
 
                 msg_alert "\033[32m$TOOLS_SSH_SET_OK"
             fi
@@ -91,6 +96,7 @@ tools() {
         [ -x /usr/sbin/otapredownload ] && content_line "${TOOLS_MENU_MI_UPDATE_ITEM_PREFIX}\033[33m$mi_update\033[0m${TOOLS_MENU_MI_UPDATE_ITEM_SUFFIX}"
         [ "$systype" = "mi_snapshot" ] && content_line "${TOOLS_MENU_MI_AUTO_SSH_ITEM_PREFIX}\033[$mi_mi_autoSSH_type \033[0m${TOOLS_MENU_MI_AUTO_SSH_ITEM_SUFFIX}"
         [ "$systype" = "mi_snapshot" ] && content_line "${TOOLS_MENU_MI_TUN_FIX_ITEM_PREFIX}\033[$mi_tunfix \033[0m${TOOLS_MENU_MI_TUN_FIX_ITEM_SUFFIX}"
+        content_line "$TOOLS_MENU_ADMIN_ITEM"
         btm_box "" \
             "0) $COMMON_BACK"
         read -r -p "$COMMON_INPUT> " num
@@ -187,6 +193,9 @@ tools() {
             else
                 msg_alert "\033[31m$TOOLS_DEVICE_NOT_NEED\033[0m"
             fi
+            ;;
+        9)
+            ssh_admin_menu
             ;;
         *)
             errornum

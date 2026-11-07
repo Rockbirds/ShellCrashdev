@@ -77,7 +77,7 @@ rm -rf "$CRASHDIR"/starts/shellcrash.openrc
 command -v bash >/dev/null 2>&1 && shtype=bash
 [ -x /bin/ash ] && shtype=ash
 #批量授权
-for file in start.sh starts/bfstart.sh starts/afstart.sh starts/fw_stop.sh starts/fw_ipv6_watch.sh menu.sh menus/task_cmd.sh menus/bot_tg.sh; do
+for file in start.sh starts/bfstart.sh starts/ssh_admin_boot.sh starts/afstart.sh starts/fw_stop.sh starts/fw_ipv6_watch.sh menu.sh menus/task_cmd.sh menus/bot_tg.sh; do
     sed -i "s|/bin/sh|/bin/$shtype|" "$CRASHDIR/$file" 2>/dev/null
     chmod +x "$CRASHDIR/$file" 2>/dev/null
 done
@@ -110,9 +110,10 @@ grep -q 'firewall_mod' "$CRASHDIR/configs/ShellClash.cfg" 2>/dev/null || {
     nft add table inet shellcrash 2>/dev/null && firewall_mod=nftables
     setconfig firewall_mod $firewall_mod
 }
-#设置更新地址
-[ -n "$url" ] && setconfig update_url "$url"
-[ -n "$release_type" ] && setconfig release_type "$release_type"
+# This fork has one published branch; migrate old installations as well.
+setconfig update_url "'https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/dev'"
+setconfig url_id "''"
+setconfig release_type dev
 #设置语言
 [ -n "$language" ] && echo "$language" > "$CRASHDIR/configs/i18n.cfg"
 #设置环境变量
@@ -176,7 +177,7 @@ fi
     setconfig dns_mod 'mix'
     setconfig firewall_area '1'
     setconfig firewall_mod 'nftables'
-    setconfig release_type 'master'
+    setconfig release_type dev
     setconfig start_old 'OFF'
     echo "$CRASHDIR/menu.sh" >> /etc/profile
     cat > /usr/bin/crash <<'EOF'
@@ -188,6 +189,13 @@ EOF
     chmod 755 /usr/bin/crash	
 }
 setconfig systype $systype
+# Restore the independent SSH boot entry when upgrading an existing install.
+if [ -f /data/shellcrash-ssh/port ] ||
+   [ -f /mnt/userdata/shellcrash-ssh/port ] ||
+   [ -f /var/lib/shellcrash-ssh/port ]; then
+    . "$CRASHDIR"/libs/ssh_admin_runtime.sh
+    ssh_admin_install_boot_hook >/dev/null 2>&1 || :
+fi
 #删除临时文件
 rm -rf /tmp/*rash*gz
 rm -rf /tmp/SC_tmp

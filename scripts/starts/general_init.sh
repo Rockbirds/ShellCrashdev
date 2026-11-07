@@ -3,6 +3,10 @@
 
 #初始化目录
 [ -z "$CRASHDIR" ] && CRASHDIR=$( cd $(dirname $0);cd ..;pwd)
+[ -f "$CRASHDIR/libs/ssh_admin_runtime.sh" ] && {
+    . "$CRASHDIR"/libs/ssh_admin_runtime.sh
+    ssh_admin_runtime_restore >/dev/null 2>&1
+}
 TASKCFGDIR="$CRASHDIR"/configs/task
 profile=/etc/profile
 . "$CRASHDIR"/libs/set_profile.sh
