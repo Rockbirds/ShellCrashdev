@@ -14,12 +14,13 @@ jobs:
         run: |
           set -eu
           sudo apt-get update -qq
-          sudo apt-get install -y -qq musl-tools autoconf automake libtool pkg-config
+          sudo apt-get install -y -qq musl-tools autoconf automake libtool pkg-config linux-libc-dev
           git clone --quiet --depth 1 --branch v2.3.1 https://github.com/sigma-star/mtd-utils.git mtd-utils-src
           cd mtd-utils-src
           test "$(git rev-parse HEAD)" = 053ee1038e5dedae61a88cadfb7bdfe9894d8bb6
           ./autogen.sh
-          CC=musl-gcc LDFLAGS=-static ./configure --build=aarch64-linux-musl --host=aarch64-linux-musl --without-ubifs --without-jffs --without-crypto --without-xattr --without-zstd --without-lzo --without-zlib --without-selinux
+          test -f /usr/include/aarch64-linux-gnu/asm/byteorder.h
+          CC=musl-gcc CPPFLAGS='-idirafter /usr/include/aarch64-linux-gnu' LDFLAGS=-static ./configure --build=aarch64-linux-musl --host=aarch64-linux-musl --without-ubifs --without-jffs --without-crypto --without-xattr --without-zstd --without-lzo --without-zlib --without-selinux
           make -j2 nanddump mtdinfo ubinfo
           strip nanddump mtdinfo ubinfo
           for name in nanddump mtdinfo ubinfo; do
