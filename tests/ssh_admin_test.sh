@@ -178,4 +178,14 @@ case "$diagnostics" in
 *test-hash*) echo 'Diagnostics exposed a password hash' >&2; exit 1 ;;
 esac
 
+TOOLS_ADMIN_PERSISTENCE_SYSTEM='system UBIFS; reboot pending'
+TOOLS_ADMIN_PERSISTENCE_NONE='not configured'
+SSH_ADMIN_MOUNTS_FILE="$test_dir/mounts"
+printf 'ubi0:system / ubifs rw,relatime 0 0\n' >"$SSH_ADMIN_MOUNTS_FILE"
+[ "$(ssh_admin_persistence_state)" = "$TOOLS_ADMIN_PERSISTENCE_SYSTEM" ]
+printf 'tmpfs / tmpfs rw,relatime 0 0\n' >"$SSH_ADMIN_MOUNTS_FILE"
+[ "$(ssh_admin_persistence_state)" = "$TOOLS_ADMIN_PERSISTENCE_NONE" ]
+printf 'ubi0:system / ubifs rw,relatime 0 0\ntmpfs /etc tmpfs rw,relatime 0 0\n' >"$SSH_ADMIN_MOUNTS_FILE"
+[ "$(ssh_admin_persistence_state)" = "$TOOLS_ADMIN_PERSISTENCE_NONE" ]
+
 echo 'SSH admin tests: OK'

@@ -60,7 +60,7 @@ curl -fL https://raw.githubusercontent.com/Rockbirds/ShellCrashdev/dev/install.s
 if command -v bash >/dev/null 2>&1; then bash /tmp/install.sh; else sh /tmp/install.sh; fi
 ```
 
-安装后运行 `crash`，进入「工具与优化 → 9) 设备SSH与root管理」。选项 2 修改 root 密码：在可写 UBIFS 系统上使用系统的 `passwd`，在账户目录只读的 UDX710 系统上使用随包提供的静态 AArch64 哈希工具，保存受限的 SHA-512 shadow 副本并 bind mount 到 `/etc/shadow`。选项 3 使用随包提供的静态 AArch64 Dropbear 和 OpenSSH `sftp-server` 开启 SSH/SFTP，root 密码登录使用同一端口。主机密钥和端口写入持久化存储：已有 `/data` 的设备用 `/data/shellcrash-ssh`，以 `/mnt/userdata` 为用户数据卷的设备用 `/mnt/userdata/shellcrash-ssh`。已确认通过 `/home/root/loader.sh` 启动 Web 终端的 UDX710 固件，会备份该脚本并追加独立 SSH 恢复入口；其他可写 SysV 固件使用 `/etc/rcS.d/S99shellcrash-ssh`。开机时先恢复密码挂载，再启动 SSH/SFTP。菜单显示开机恢复状态。选项 4 显示诊断，选项 5 执行一条自定义命令。当前密码明文无法读取。更新后需在目标设备上实际重启并测试 SSH 与 SFTP；外网访问还须检查防火墙与上级路由器。静态程序来源、构建方式和 SFTP 下载测试见[构建工作流](.github/workflows/build-dropbear-aarch64.yml)。
+安装后运行 `crash`，进入「工具与优化 → 9) 设备SSH与root管理」。选项 2 修改 root 密码：在可写 UBIFS 系统上使用系统的 `passwd`，在账户目录只读的 UDX710 系统上使用随包提供的静态 AArch64 哈希工具，保存受限的 SHA-512 shadow 副本并 bind mount 到 `/etc/shadow`。选项 3 使用随包提供的静态 AArch64 Dropbear 和 OpenSSH `sftp-server` 开启 SSH/SFTP，root 密码登录使用同一端口。主机密钥和端口写入持久化存储：已有 `/data` 的设备用 `/data/shellcrash-ssh`，以 `/mnt/userdata` 为用户数据卷的设备用 `/mnt/userdata/shellcrash-ssh`。已确认通过 `/home/root/loader.sh` 启动 Web 终端的 UDX710 固件，会备份该脚本并追加独立 SSH 恢复入口；其他可写 SysV 固件使用 `/etc/rcS.d/S99shellcrash-ssh`。开机时先恢复密码挂载，再启动 SSH/SFTP。菜单显示开机恢复状态；在可写 UBIFS 上，root 密码状态显示系统账户文件已写入并提示重启验证。选项 4 显示诊断，选项 5 执行一条自定义命令。当前密码明文无法读取。更新后需在目标设备上实际重启并测试 SSH 与 SFTP；外网访问还须检查防火墙与上级路由器。静态程序来源、构建方式和 SFTP 下载测试见[构建工作流](.github/workflows/build-dropbear-aarch64.yml)。
 
 ### :cloud: 虚拟机
 - **Alpine Linux 虚拟机**：强烈建议使用 Alpine 镜像以获得最佳兼容性

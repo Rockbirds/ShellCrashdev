@@ -115,6 +115,11 @@ ssh_admin_persistence_state() {
         fi
     elif ssh_admin_shadow_mounted; then
         printf '%s\n' "$TOOLS_ADMIN_PERSISTENCE_RUNTIME"
+    elif [ "$(ssh_admin_password_state)" = "$TOOLS_ADMIN_PASSWORD_SET" ] &&
+         awk '$2=="/" && $3=="ubifs" && $4 ~ /(^|,)rw(,|$)/ {root=1}
+              $2=="/etc" || $2=="/etc/shadow" {separate=1}
+              END {exit !(root && !separate)}' "${SSH_ADMIN_MOUNTS_FILE:-/proc/mounts}" 2>/dev/null; then
+        printf '%s\n' "$TOOLS_ADMIN_PERSISTENCE_SYSTEM"
     else
         printf '%s\n' "$TOOLS_ADMIN_PERSISTENCE_NONE"
     fi
