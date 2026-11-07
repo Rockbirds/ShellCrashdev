@@ -1,0 +1,58 @@
+name: Build static AArch64 MTD tools
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Build nanddump, mtdinfo and ubinfo
+        run: |
+          set -eu
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq musl-tools autoconf automake libtool pkg-config
+          git clone --quiet --depth 1 --branch v2.3.1 https://github.com/sigma-star/mtd-utils.git mtd-utils-src
+          cd mtd-utils-src
+          test "$(git rev-parse HEAD)" = 053ee1038e5dedae61a88cadfb7bdfe9894d8bb6
+          ./autogen.sh
+          CC=musl-gcc LDFLAGS=-static ./configure +            --without-crypto --without-xattr --without-zstd +            --without-lzo --without-zlib --without-selinux
+          make -j2 nanddump mtdinfo ubinfo
+          strip nanddump mtdinfo ubinfo
+          for name in nanddump mtdinfo ubinfo; do
+            file "$name"
+            ! readelf -l "$name" | grep -q INTERP
+            test "$(readelf -h "$name" | awk '/Machine:/{print $2}')" = AArch64
+            "./$name" --version
+          done
+          sha256sum nanddump mtdinfo ubinfo
+      - name: Publish verified binaries to dev
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          python3 - <<'PY'
+          import base64, json, pathlib, subprocess
+          for name in ('nanddump', 'mtdinfo', 'ubinfo'):
+              file_path = pathlib.Path('mtd-utils-src') / name
+              endpoint = f'repos/Rockbirds/ShellCrashdev/contents/assets/flash/aarch64/{name}'
+              payload = {
+                  'message': f'Add static AArch64 {name} from pinned mtd-utils v2.3.1',
+                  'content': base64.b64encode(file_path.read_bytes()).decode(),
+                  'branch': 'dev',
+              }
+              existing = subprocess.run(
+                  ['gh', 'api', f'{endpoint}?ref=dev', '--jq', '.sha'],
+                  capture_output=True, text=True,
+              )
+              if existing.returncode == 0:
+                  payload['sha'] = existing.stdout.strip()
+              subprocess.run(
+                  ['gh', 'api', '-X', 'PUT', endpoint, '--input', '-'],
+                  input=json.dumps(payload), text=True, check=True,
+                  stdout=subprocess.DEVNULL,
+              )
+          PY
